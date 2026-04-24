@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Video Looper</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<input type="file" id="file">
+<video id="v" autoplay loop muted playsinline></video>
+<script>
+const v=document.getElementById('v')
+document.getElementById('file').onchange=e=>{
+const f=e.target.files[0]
+if(f)v.src=URL.createObjectURL(f)
+}
+</script>
+</body>
+</html>
