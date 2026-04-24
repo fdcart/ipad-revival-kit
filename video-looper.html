@@ -1,20 +1,103 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Video Looper</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Revival Video Looper PRO</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 <link rel="stylesheet" href="style.css">
 </head>
-<body>
-<input type="file" id="file">
-<video id="v" autoplay loop muted playsinline></video>
+<body class="player-body">
+
+<video id="video" class="player-video" autoplay muted playsinline webkit-playsinline></video>
+
+<div id="panel" class="panel">
+<h1>Revival Loop PRO</h1>
+
+<label class="label">Local videos</label>
+<input type="file" id="files" accept="video/*" multiple>
+
+<label class="label">Video URL</label>
+<input id="url" placeholder="https://...">
+<button onclick="loadURL()">Load</button>
+
+<div class="row">
+<button onclick="togglePlay()">Play/Pause</button>
+<button onclick="toggleMute()">Mute</button>
+</div>
+
+<div class="row">
+<button onclick="fitMode()">Fit</button>
+<button onclick="next()">Next</button>
+</div>
+
+<div class="row">
+<button onclick="kiosk()">Kiosk Mode</button>
+<button onclick="clearList()">Clear</button>
+</div>
+
+<p class="hint">Tip: Add to Home Screen + Guided Access</p>
+</div>
+
+<button class="show-panel" onclick="showPanel()">⚙</button>
+
 <script>
-const v=document.getElementById('v')
-document.getElementById('file').onchange=e=>{
-const f=e.target.files[0]
-if(f)v.src=URL.createObjectURL(f)
+let list=[]
+let i=0
+let fit='contain'
+const v=document.getElementById('video')
+
+document.getElementById('files').onchange=e=>{
+list=[...e.target.files].map(f=>URL.createObjectURL(f))
+i=0
+play()
 }
+
+function loadURL(){
+const u=document.getElementById('url').value.trim()
+if(!u)return
+list=[u]
+i=0
+play()
+}
+
+function play(){
+if(!list.length)return
+v.src=list[i]
+v.loop=list.length===1
+v.play().catch(()=>{})
+}
+
+function next(){
+i=(i+1)%list.length
+play()
+}
+
+function togglePlay(){v.paused?v.play():v.pause()}
+function toggleMute(){v.muted=!v.muted}
+
+function fitMode(){
+fit=fit==='contain'?'cover':'contain'
+v.style.objectFit=fit
+}
+
+function kiosk(){
+document.getElementById('panel').style.display='none'
+document.body.classList.add('kiosk')
+v.play().catch(()=>{})
+}
+
+function showPanel(){
+document.getElementById('panel').style.display='block'
+document.body.classList.remove('kiosk')
+}
+
+function clearList(){list=[];v.removeAttribute('src');v.load()}
+
+v.addEventListener('ended',()=>{if(list.length>1)next()})
+v.addEventListener('error',()=>setTimeout(()=>play(),3000))
+
+document.body.onclick=()=>{if(document.body.classList.contains('kiosk'))v.play().catch(()=>{})}
 </script>
+
 </body>
 </html>
