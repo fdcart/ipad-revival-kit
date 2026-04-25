@@ -1,0 +1,69 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Revival Assistant</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="stylesheet" href="../style.css">
+</head>
+<body>
+<main class="page">
+<a class="button" href="../index.html">Back</a>
+<h1>Revival Assistant</h1>
+<p class="muted">Internet AI assistant for old iPads. Requires the backend proxy in /api/server.js.</p>
+<select id="mode">
+<option value="help">General help</option>
+<option value="summarize">Summarize</option>
+<option value="rewrite">Rewrite clearly</option>
+<option value="museum">Museum label</option>
+<option value="ideas">Generate ideas</option>
+<option value="todo">Make task list</option>
+</select>
+<textarea id="input" rows="10" placeholder="Ask something or paste text..."></textarea>
+<button onclick="askAI()">Ask Assistant</button>
+<button onclick="clearChat()">Clear</button>
+<div id="status" class="hint"></div>
+<div id="output" class="page-card" style="white-space:pre-wrap"></div>
+</main>
+<script>
+var API_URL=localStorage.ir_api_url||'/api/assistant';
+var history=JSON.parse(localStorage.ir_ai_history||'[]');
+var output=document.getElementById('output');
+var statusBox=document.getElementById('status');
+function draw(){output.innerText=history.map(function(m){return (m.role==='user'?'You: ':'Assistant: ')+m.content}).join('\n\n')}
+function save(){localStorage.ir_ai_history=JSON.stringify(history)}
+function clearChat(){history=[];save();draw()}
+function promptForMode(mode,text){
+ if(mode==='summarize')return 'Summarize this clearly for an old iPad user:\n'+text;
+ if(mode==='rewrite')return 'Rewrite this clearly and simply:\n'+text;
+ if(mode==='museum')return 'Create a concise museum/gallery label from this information. Include title, artist, medium, year if available, and a short public-facing description:\n'+text;
+ if(mode==='ideas')return 'Generate practical ideas from this:\n'+text;
+ if(mode==='todo')return 'Turn this into a clear checklist:\n'+text;
+ return text;
+}
+function askAI(){
+ var text=document.getElementById('input').value;
+ var mode=document.getElementById('mode').value;
+ if(!text){return}
+ var finalPrompt=promptForMode(mode,text);
+ history.push({role:'user',content:text});save();draw();statusBox.innerText='Thinking...';
+ var xhr=new XMLHttpRequest();
+ xhr.open('POST',API_URL,true);
+ xhr.setRequestHeader('Content-Type','application/json');
+ xhr.onreadystatechange=function(){
+  if(xhr.readyState===4){
+   statusBox.innerText='';
+   try{
+    var data=JSON.parse(xhr.responseText);
+    if(data.error){history.push({role:'assistant',content:'Error: '+data.error});}
+    else{history.push({role:'assistant',content:data.text||'No response'});}
+   }catch(e){history.push({role:'assistant',content:'Connection error. Check backend URL and API key.'});}
+   save();draw();document.getElementById('input').value='';
+  }
+ };
+ xhr.send(JSON.stringify({message:finalPrompt,history:history.slice(-8)}));
+}
+draw();
+</script>
+</body>
+</html>
